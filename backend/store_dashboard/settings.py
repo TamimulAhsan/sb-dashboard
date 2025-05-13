@@ -40,6 +40,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'dashboard',
     'users',
+    'corsheaders',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +51,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'store_dashboard.urls'
@@ -137,3 +139,8 @@ REST_FRAMEWORK = {
         'rest_framework.renderers.BrowsableAPIRenderer',  # Enables the HTML API view
     )
 }
+
+CORS_ALLOWED_ORIGINS = [
+    "https://dashboard.tamimulahsan.com",
+]
+CORS_ALLOW_ALL_ORIGINS = True
