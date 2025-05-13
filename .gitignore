@@ -1,0 +1,67 @@
+# === Global ===
+*.pyc
+*.pyo
+*.pyd
+__pycache__/
+*.log
+*.env
+.env.*
+*.sqlite3
+.DS_Store
+*.zip
+
+# === Python / Django ===
+/backend/db.sqlite3
+/backend/*.sqlite3
+/backend/__pycache__/
+/backend/**/__pycache__/
+/backend/**/migrations/*.pyc
+/backend/**/migrations/__pycache__/
+/backend/**/migrations/*.py
+!/backend/**/migrations/__init__.py
+/backend/venv/
+/backend/env/
+/backend/.vscode/
+*.pot
+*.mo
+*.py[cod]
+
+# === Node / Frontend ===
+/frontend/node_modules/
+/frontend/.turbo/
+/frontend/.output/
+/frontend/.next/
+/frontend/.vite/
+/frontend/dist/
+/frontend/.eslintcache
+/frontend/.parcel-cache
+/frontend/.env
+/frontend/.env.*
+
+# === Vite / Bun ===
+/frontend/bun.lockb
+/frontend/.bun/
+frontend/.cache/
+
+# === OS / Editor files ===
+*.swp
+*.swo
+*.bak
+*.tmp
+*~
+Thumbs.db
+ehthumbs.db
+.idea/
+.vscode/
+*.iml
+
+# === Build / Temp ===
+/build/
+/dist/
+/tmp/
+/temp/
+/dashboard/static/
+/dashboard/media/
+
+# === Archive Files ===
+/demo-frontend.zip

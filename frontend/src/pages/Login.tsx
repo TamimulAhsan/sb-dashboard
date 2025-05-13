@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { Shield } from 'lucide-react';
+import { useAuth } from '@/hooks/useAuth';
 
 const Login = () => {
   const [username, setUsername] = useState('');
@@ -14,6 +15,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -35,6 +37,9 @@ const Login = () => {
     try {
       // This is where you would make an API call to your backend
       // For now, just simulate a successful login with admin/admin
+
+      const success = await login(username, password);
+      
       if (username === 'admin' && password === 'admin') {
         // Mock successful login
         const mockSession = {
