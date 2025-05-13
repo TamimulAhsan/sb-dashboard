@@ -3,25 +3,47 @@ import React from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, LineChart, AreaChart } from '@/components/ui/chart';
-import { mockOrders, mockProducts, mockRevenueData } from '@/data/mockData';
 import { Package, ShoppingCart, DollarSign, Users, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import api from '@/lib/api';
+
+
+interface DashboardData {
+  total_products: number;
+  active_orders: number;
+  total_revenue: number;
+  total_customers: number;
+  revenue_trend: { month: string; amount: number }[];
+  recent_orders: {
+    order_number: string;
+    username: string;
+    amount: number;
+    order_status: string;
+  }[];
+}
 
 const DashboardOverview = () => {
-  // Calculate summary metrics
-  const totalProducts = mockProducts.length;
+
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   
-  // Count only orders with status pending, processing, or shipped as active
-  const activeOrders = mockOrders.filter(order => 
-    ['pending', 'processing', 'shipped'].includes(order.order_status?.toLowerCase() || '')
-  ).length;
-  
-  const totalRevenue = mockOrders.reduce((sum, order) => sum + order.amount, 0);
-  
-  const recentOrders = mockOrders.slice(0, 5);
-  
+  useEffect(() => {
+    api.get('dashboard/summary/')
+      .then(res => setDashboardData(res.data))
+      .catch(err => console.error('Dashboard load failed:', err));
+  }, []);
+
+  if (!dashboardData) {
+    return <p className="text-muted-foreground">Loading dashboard...</p>;
+  }
+
+  const totalProducts = dashboardData.total_products;
+  const activeOrders = dashboardData.active_orders;
+  const totalRevenue = dashboardData.total_revenue;
+  const recentOrders = dashboardData.recent_orders;
+
   return (
     <div className="space-y-6 animate-fade-in">
       <div className="flex items-center justify-between">
@@ -52,7 +74,7 @@ const DashboardOverview = () => {
         />
         <MetricCard 
           title="Customers" 
-          value="42" 
+          value={dashboardData.total_customers.toString()} 
           description="Total registered customers" 
           icon={<Users />}
         />
@@ -68,7 +90,7 @@ const DashboardOverview = () => {
           </CardHeader>
           <CardContent>
             <AreaChart
-              data={mockRevenueData}
+              data={dashboardData.revenue_trend}
               index="date"
               categories={["amount"]}
               colors={["primary"]}

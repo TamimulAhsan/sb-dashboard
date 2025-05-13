@@ -1,5 +1,5 @@
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,14 +9,15 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Label } from '@/components/ui/label';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Search, Plus, Pencil, Trash2, Upload, Image } from 'lucide-react';
-import { mockProducts } from '@/data/mockData';
 import { Product } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import api from '@/lib/api';
+
 
 const ProductsPage = () => {
   const { toast } = useToast();
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<Partial<Product>>({
@@ -28,6 +29,13 @@ const ProductsPage = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    api.get('products/')
+      .then(res => setProducts(res.data))
+      .catch(err => console.error('Failed to load products'));
+  }, []);
+
 
   // Filter products based on search term
   const filteredProducts = products.filter(
@@ -71,54 +79,56 @@ const ProductsPage = () => {
     fileInputRef.current?.click();
   };
 
-  const handleAddProduct = () => {
-    const newProduct: Product = {
-      ...formData as Product,
-      product_id: Math.max(0, ...products.map(p => p.product_id)) + 1,
-    };
-    
-    setProducts([...products, newProduct]);
-    setFormData({
-      product_name: '',
-      details: '',
-      price: 0,
-      image: '/placeholder.svg',
-    });
-    setPreviewImage(null);
-    setDialogOpen(false);
-    
-    toast({
-      title: "Product added",
-      description: `${newProduct.product_name} has been added successfully.`,
-    });
-  };
 
-  const handleEditProduct = () => {
-    if (!editingProduct) return;
-    
-    setProducts(products.map(p => 
-      p.product_id === editingProduct.product_id ? { ...p, ...formData } : p
-    ));
+  const resetForm = () => {
+    setFormData({ product_name: '', details: '', price: 0, image: '/placeholder.svg' });
+    setPreviewImage(null);
     setEditingProduct(null);
-    setPreviewImage(null);
-    setDialogOpen(false);
-    
-    toast({
-      title: "Product updated",
-      description: `${formData.product_name} has been updated successfully.`,
-    });
   };
+  
 
-  const handleDeleteProduct = (productId: number) => {
-    setProducts(products.filter(p => p.product_id !== productId));
-    
-    toast({
-      title: "Product deleted",
-      description: "The product has been deleted successfully.",
-      variant: "destructive",
-    });
+  const handleAddProduct = async () => {
+    try {
+      const res = await api.post('products/', formData);
+      setProducts(prev => [...prev, res.data]);
+      toast({ title: 'Product added', description: `${res.data.product_name} has been added.` });
+    } catch (err) {
+      console.error('Failed to add product', err);
+      toast({ title: 'Error', description: 'Could not add product', variant: 'destructive' });
+    } finally {
+      setDialogOpen(false);
+      resetForm();
+    }
   };
-
+  
+  const handleEditProduct = async () => {
+    if (!editingProduct) return;
+    try {
+      const res = await api.patch(`products/${editingProduct.product_id}/`, formData);
+      setProducts(prev =>
+        prev.map(p => p.product_id === editingProduct.product_id ? res.data : p)
+      );
+      toast({ title: 'Product updated', description: `${res.data.product_name} has been updated.` });
+    } catch (err) {
+      console.error('Failed to update product', err);
+      toast({ title: 'Error', description: 'Could not update product', variant: 'destructive' });
+    } finally {
+      setDialogOpen(false);
+      resetForm();
+    }
+  };
+  
+  const handleDeleteProduct = async (productId: number) => {
+    try {
+      await api.delete(`products/${productId}/`);
+      setProducts(prev => prev.filter(p => p.product_id !== productId));
+      toast({ title: 'Product deleted', description: 'The product has been deleted.', variant: 'destructive' });
+    } catch (err) {
+      console.error('Failed to delete product', err);
+      toast({ title: 'Error', description: 'Could not delete product', variant: 'destructive' });
+    }
+  };
+  
   const openAddDialog = () => {
     setEditingProduct(null);
     setFormData({
@@ -200,7 +210,7 @@ const ProductsPage = () => {
                   <TableCell className="font-medium">{product.product_id}</TableCell>
                   <TableCell>{product.product_name}</TableCell>
                   <TableCell className="max-w-xs truncate">{product.details}</TableCell>
-                  <TableCell className="text-right">${product.price.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">${product.price ? parseFloat(product.price).toFixed(2) : '0.00'}                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => openEditDialog(product)}>

@@ -4,23 +4,77 @@ import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, LineChart, PieChart } from '@/components/ui/chart';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { mockRevenueData, mockProductPerformance, mockTopProducts } from '@/data/mockData';
+import { useEffect, useState } from 'react';
+import api from '@/lib/api';
+
 
 const AnalyticsPage = () => {
-  // Transform data for pie chart
-  const topProductsForPieChart = mockTopProducts.map(product => ({
+
+  const [productStats, setProductStats] = useState([]);
+
+  const [orderStats, setOrderStats] = useState<{
+    total_orders: number;
+    order_frequency: number;
+    monthly_order_trend: { month: string; count: number }[];
+  } | null>(null);
+
+  const [revenueStats, setRevenueStats] = useState<{
+    total_revenue: number;
+    average_order_value: number;
+    monthly_revenue_trend: { month: string; amount: number }[];
+  } | null>(null);
+  
+  
+  
+  useEffect(() => {
+    api.get('analytics/products/')
+      .then(res => setProductStats(res.data))
+      .catch(err => console.error('Product analytics fetch failed:', err));
+    
+    api.get('analytics/orders/')
+      .then(res => setOrderStats(res.data))
+      .catch(err => console.error('Order analytics fetch failed:', err));
+
+    api.get('analytics/revenue/')
+      .then(res => setRevenueStats(res.data))
+      .catch(err => console.error('Revenue analytics fetch failed:', err));
+    
+  }, []);
+  
+
+  if (!productStats.length || !orderStats || !revenueStats) {
+    return <p className="text-muted-foreground">Loading analytics...</p>;
+  }
+  
+
+  const totalRevenue = productStats.reduce((sum, p) => sum + p.revenue, 0);
+
+  const topProductsForPieChart = productStats.map(product => ({
     name: product.product_name,
     value: product.sales
   }));
 
-  // Calculate total revenue
-  const totalRevenue = mockProductPerformance.reduce(
-    (sum, product) => sum + product.revenue, 
-    0
-  );
-  
+
   // Custom product colors
-  const productColors = ["#8B5CF6", "#F97316", "#0EA5E9", "#10B981", "#EF4444", "#F59E0B"];
+  const classyPalette = [
+    "indigo",
+    "pink",
+    "green",
+    "amber",
+    "teal",
+    "rose",
+    "violet",
+    "orange",
+    "blue",
+    "purple",
+  ];
+      
+  
+  const productColorMap = productStats.reduce((map, product, index) => {
+    map[product.product_name] = classyPalette[index % classyPalette.length];
+    return map;
+  }, {} as Record<string, string>);
+  
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -46,7 +100,7 @@ const AnalyticsPage = () => {
                 <CardDescription>Current year</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">${totalRevenue.toFixed(2)}</div>
+                <div className="text-3xl font-bold">${revenueStats.total_revenue.toFixed(2)}</div>
               </CardContent>
             </Card>
             
@@ -56,7 +110,7 @@ const AnalyticsPage = () => {
                 <CardDescription>Current year</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">$145.80</div>
+                <div className="text-3xl font-bold">${revenueStats.average_order_value.toFixed(2)}</div>
               </CardContent>
             </Card>
           </div>
@@ -68,7 +122,10 @@ const AnalyticsPage = () => {
             </CardHeader>
             <CardContent>
               <LineChart
-                data={mockRevenueData}
+                data={revenueStats.monthly_revenue_trend.map(item => ({
+                  date: item.month,
+                  amount: item.amount,
+                }))}
                 index="date"
                 categories={["amount"]}
                 colors={["primary"]}
@@ -92,7 +149,7 @@ const AnalyticsPage = () => {
                   data={topProductsForPieChart}
                   index="name"
                   category="value"
-                  colors={productColors.map(color => color.replace('#', ''))}
+                  colors={productStats.map(p => productColorMap[p.product_name])}
                   valueFormatter={(value) => `${value} units`}
                   className="h-80"
                 />
@@ -106,7 +163,7 @@ const AnalyticsPage = () => {
               </CardHeader>
               <CardContent>
                 <BarChart
-                  data={mockProductPerformance}
+                  data={productStats}
                   index="product_name"
                   categories={["revenue"]}
                   colors={["#8B5CF6"]}
@@ -124,7 +181,7 @@ const AnalyticsPage = () => {
             </CardHeader>
             <CardContent>
               <BarChart
-                data={mockProductPerformance}
+                data={productStats}
                 index="product_name"
                 categories={["sales", "revenue"]}
                 colors={["#F97316", "#0EA5E9"]}
@@ -145,7 +202,9 @@ const AnalyticsPage = () => {
                 <CardDescription>Current year</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">845</div>
+                <div className="text-3xl font-bold">
+                {orderStats ? orderStats.total_orders : '...'}
+                </div>
               </CardContent>
             </Card>
             
@@ -155,7 +214,9 @@ const AnalyticsPage = () => {
                 <CardDescription>Orders per customer</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">1.8</div>
+                <div className="text-3xl font-bold">
+                {orderStats ? orderStats.order_frequency : '...'}
+                </div>
               </CardContent>
             </Card>
           </div>
@@ -167,7 +228,10 @@ const AnalyticsPage = () => {
             </CardHeader>
             <CardContent>
               <LineChart
-                data={mockRevenueData.map(item => ({ date: item.date, orders: Math.floor(item.amount / 145.8) }))}
+                data={orderStats?.monthly_order_trend.map(item => ({
+                  date: item.month,
+                  orders: item.count,
+                })) || []}
                 index="date"
                 categories={["orders"]}
                 colors={["primary"]}

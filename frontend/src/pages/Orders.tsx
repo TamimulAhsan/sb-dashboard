@@ -13,10 +13,13 @@ import { mockOrders, mockProducts, getOrderStatusColor, getPaymentStatusColor } 
 import { Order } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
+import api from '@/lib/api';
 
 const OrdersPage = () => {
   const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<{ product_id: number; product_name: string }[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -24,7 +27,18 @@ const OrdersPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editStatus, setEditStatus] = useState<string>('');
   const [editPaymentStatus, setEditPaymentStatus] = useState<string>('');
+
+  useEffect(() => {
+    api.get('orders/')
+      .then(res => setOrders(res.data))
+      .catch(err => console.error('Failed to load orders'));
   
+    api.get('products/')
+      .then(res => setProducts(res.data))
+      .catch(err => console.error('Failed to load products'));
+  }, []);
+  
+
   // Filter orders based on search term and status filter
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
@@ -38,9 +52,8 @@ const OrdersPage = () => {
     return matchesSearch && matchesStatus;
   });
 
-  // Get product name from product_id
   const getProductName = (productId: number) => {
-    const product = mockProducts.find(p => p.product_id === productId);
+    const product = products.find(p => p.product_id === productId);
     return product?.product_name || 'Unknown Product';
   };
   
@@ -56,29 +69,42 @@ const OrdersPage = () => {
     setEditDialogOpen(true);
   };
   
-  const handleSaveStatus = () => {
-    if (!selectedOrder) return;
-    
-    const updatedOrders = orders.map(order => {
-      if (order.order_number === selectedOrder.order_number) {
-        return {
-          ...order,
-          order_status: editStatus,
-          payment_status: editPaymentStatus
-        };
-      }
-      return order;
-    });
-    
-    setOrders(updatedOrders);
-    setEditDialogOpen(false);
-    
-    toast({
-      title: "Order updated",
-      description: `Order #${selectedOrder.order_number} status has been updated.`,
-    });
+  const handleSaveStatus = async () => {
+    if (!selectedOrder) {
+      console.error("❌ selectedOrder is null — cannot update.");
+      return;
+    }
+  
+    try {
+      await api.patch(`orders/${selectedOrder.order_number}/`, {
+        order_status: editStatus,
+        payment_status: editPaymentStatus,
+      });
+  
+      const updatedOrders = orders.map(order =>
+        order.order_number === selectedOrder.order_number
+          ? { ...order, order_status: editStatus, payment_status: editPaymentStatus }
+          : order
+      );
+  
+      setOrders(updatedOrders);
+      setEditDialogOpen(false);
+  
+      toast({
+        title: 'Order updated',
+        description: `Order #${selectedOrder.order_number} status has been updated.`,
+      });
+    } catch (err) {
+      console.error('❌ Failed to update order:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to update the order. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
   
+    
   const orderStatusOptions = [
     'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'
   ];
@@ -149,7 +175,7 @@ const OrdersPage = () => {
                   <TableCell className="font-medium">{order.order_number}</TableCell>
                   <TableCell>{order.username}</TableCell>
                   <TableCell>{getProductName(order.product_id)}</TableCell>
-                  <TableCell className="text-right">${order.amount.toFixed(2)}</TableCell>
+                  <TableCell className="text-right">${parseFloat(order.amount).toFixed(2)}</TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.order_status} />
                   </TableCell>
@@ -198,7 +224,7 @@ const OrdersPage = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">User ID</h3>
-                  <p className="text-sm">{selectedOrder.userID}</p>
+                  <p className="text-sm">{selectedOrder.user_id}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Product</h3>
@@ -210,7 +236,7 @@ const OrdersPage = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Amount</h3>
-                  <p className="text-sm">${selectedOrder.amount.toFixed(2)}</p>
+                  <p className="text-sm">${parseFloat(selectedOrder.amount).toFixed(2)}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Invoice</h3>
