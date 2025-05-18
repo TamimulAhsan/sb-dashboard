@@ -22,18 +22,29 @@ const ProductsPage = () => {
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const [formData, setFormData] = useState<Partial<Product>>({
     product_name: '',
+    category: '',
     details: '',
     price: 0,
     image: '/placeholder.svg',
-  });
+  });  
   const [dialogOpen, setDialogOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [categories, setCategories] = useState<{ category_id: number; name: string }[]>([]);
+  const [newCategory, setNewCategory] = useState('');
+  const [activeTab, setActiveTab] = useState<'products' | 'categories'>('products');
+  const [editingCategory, setEditingCategory] = useState<{ category_id: number; name: string } | null>(null);
+  const [categoryDialogOpen, setCategoryDialogOpen] = useState(false);
+  const [categoryName, setCategoryName] = useState('');
+
 
   useEffect(() => {
     api.get('products/')
       .then(res => setProducts(res.data))
       .catch(err => console.error('Failed to load products'));
+    api.get('categories/')
+      .then(res => setCategories(res.data))
+      .catch(err => console.error('Failed to load categories'));
   }, []);
 
 
@@ -145,6 +156,7 @@ const ProductsPage = () => {
     setEditingProduct(product);
     setFormData({
       product_name: product.product_name,
+      category: product.category || '',
       details: product.details || '',
       price: product.price,
       image: product.image || '/placeholder.svg',
@@ -153,13 +165,90 @@ const ProductsPage = () => {
     setDialogOpen(true);
   };
 
+
+  const handleAddCategory = async () => {
+    if (!newCategory.trim()) return;
+  
+    try {
+      const res = await api.post('categories/', { name: newCategory });
+      setCategories(prev => [...prev, res.data]);
+      setNewCategory('');
+      toast({ title: 'Category added', description: `${res.data.name} added successfully.` });
+    } catch (err) {
+      console.error('Failed to add category', err);
+      toast({ title: 'Error', description: 'Could not add category', variant: 'destructive' });
+    }
+  };
+  
+  const handleDeleteCategory = async (id: number) => {
+    try {
+      await api.delete(`categories/${id}/`);
+      setCategories(prev => prev.filter(c => c.category_id !== id));
+      toast({ title: 'Category deleted', description: 'Category removed.', variant: 'destructive' });
+    } catch (err) {
+      console.error('Failed to delete category', err);
+      toast({ title: 'Error', description: 'Could not delete category', variant: 'destructive' });
+    }
+  };
+  const handleUpdateCategory = async () => {
+    if (!editingCategory) return;
+    try {
+      const res = await api.patch(`categories/${editingCategory.category_id}/`, { name: categoryName });
+      setCategories(prev =>
+        prev.map(c => c.category_id === editingCategory.category_id ? res.data : c)
+      );
+      toast({ title: 'Category updated', description: `${res.data.name} has been updated.` });
+      setCategoryDialogOpen(false);
+      setEditingCategory(null);
+      setCategoryName('');
+    } catch (err) {
+      console.error('Failed to update category', err);
+      toast({ title: 'Error', description: 'Could not update category', variant: 'destructive' });
+    }
+  };
+  
+
+  const openEditCategoryDialog = (category: { category_id: number; name: string }) => {
+    setEditingCategory(category);
+    setCategoryName(category.name);
+    setCategoryDialogOpen(true);
+  };
+
   return (
     <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col gap-2">
+      <div className="space-y-2">
         <h1 className="text-3xl font-bold tracking-tight">Products</h1>
-        <p className="text-muted-foreground">
-          Manage your product inventory
-        </p>
+        <p className="text-muted-foreground">Manage your product inventory and categories</p>
+
+        <div className="flex items-center justify-between">
+          <div className="flex space-x-2 rounded-md bg-muted p-1">
+            <button
+              className={`px-4 py-1 text-sm rounded-md ${activeTab === 'products' ? 'bg-white shadow text-primary' : 'text-muted-foreground'}`}
+              onClick={() => setActiveTab('products')}
+            >
+              Products
+            </button>
+            <button
+              className={`px-4 py-1 text-sm rounded-md ${activeTab === 'categories' ? 'bg-white shadow text-primary' : 'text-muted-foreground'}`}
+              onClick={() => setActiveTab('categories')}
+            >
+              Categories
+            </button>
+          </div>
+
+          {activeTab === 'products' && (
+            <Button onClick={openAddDialog}>
+              <Plus className="h-4 w-4 mr-2" />
+              Add Product
+            </Button>
+          )}
+          {/* {activeTab === 'categories' && (
+            // <Button onClick={() => setCategoryDialogOpen(true)}>
+            //   <Plus className="h-4 w-4 mr-2" />
+            //   Add Category
+            // </Button>
+          )} */}
+        </div>
       </div>
 
       <div className="flex justify-between items-center">
@@ -173,12 +262,12 @@ const ProductsPage = () => {
             onChange={(e) => setSearchTerm(e.target.value)}
           />
         </div>
-        <Button onClick={openAddDialog}>
+        {/* <Button onClick={openAddDialog}>
           <Plus className="h-4 w-4 mr-2" />
           Add Product
-        </Button>
+        </Button> */}
       </div>
-
+      {activeTab === 'products' && (
       <Card>
         <CardHeader>
           <CardTitle>Product Inventory</CardTitle>
@@ -194,6 +283,8 @@ const ProductsPage = () => {
                 <TableHead>ID</TableHead>
                 <TableHead>Product Name</TableHead>
                 <TableHead>Description</TableHead>
+                <TableHead>Category</TableHead>
+
                 <TableHead className="text-right">Price</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
@@ -210,6 +301,7 @@ const ProductsPage = () => {
                   <TableCell className="font-medium">{product.product_id}</TableCell>
                   <TableCell>{product.product_name}</TableCell>
                   <TableCell className="max-w-xs truncate">{product.details}</TableCell>
+                  <TableCell>{product.category || 'N/A'}</TableCell>
                   <TableCell className="text-right">${product.price ? parseFloat(product.price).toFixed(2) : '0.00'}                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
@@ -234,6 +326,68 @@ const ProductsPage = () => {
           </Table>
         </CardContent>
       </Card>
+      )}
+
+      {activeTab === 'categories' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Categories</CardTitle>
+            <CardDescription>
+              {categories.length} category{categories.length !== 1 ? 'ies' : 'y'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+          {activeTab === 'categories' && (
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="New category name"
+                value={newCategory}
+                onChange={(e) => setNewCategory(e.target.value)}
+                className="max-w-sm"
+              />
+              <Button onClick={handleAddCategory}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Category
+              </Button>
+            </div>
+          )}
+
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Name</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {categories.map(cat => (
+                  <TableRow key={cat.category_id}>
+                    <TableCell>{cat.category_id}</TableCell>
+                    <TableCell>{cat.name}</TableCell>
+                    <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" onClick={() => openEditCategoryDialog(cat)}>
+                      <Pencil className="h-4 w-4" />
+                    </Button>
+                    <Button variant="ghost" size="icon" onClick={() => handleDeleteCategory(cat.category_id)}>
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+                {categories.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
+                      No categories found.
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      )}
+
 
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
         <DialogContent className="sm:max-w-md">
@@ -285,6 +439,24 @@ const ProductsPage = () => {
               />
             </div>
             <div className="grid w-full items-center gap-2">
+              <Label htmlFor="category">Category</Label>
+              <select
+                id="category"
+                name="category"
+                value={formData.category || ''}
+                onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))}
+                className="border rounded px-3 py-2 text-sm"
+              >
+                <option value="">Select category</option>
+                {categories.map(c => (
+                  <option key={c.category_id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid w-full items-center gap-2">
               <Label htmlFor="details">Product Description</Label>
               <Textarea
                 id="details"
@@ -323,6 +495,61 @@ const ProductsPage = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={categoryDialogOpen} onOpenChange={(open) => {
+          if (!open) {
+            setEditingCategory(null);
+            setCategoryName('');
+          }
+          setCategoryDialogOpen(open);
+        }}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editingCategory ? 'Edit Category' : 'Add Category'}</DialogTitle>
+              <DialogDescription>
+                {editingCategory ? 'Update the category name below.' : 'Enter a new category name.'}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-2">
+              <div className="grid w-full items-center gap-2">
+                <Label htmlFor="category_name">Category Name</Label>
+                <Input
+                  id="category_name"
+                  name="category_name"
+                  value={categoryName}
+                  onChange={(e) => setCategoryName(e.target.value)}
+                  placeholder="Enter category name"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setCategoryDialogOpen(false);
+                  setEditingCategory(null);
+                  setCategoryName('');
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={() => {
+                  if (editingCategory) {
+                    handleUpdateCategory();
+                  } else {
+                    handleAddCategory();
+                    setCategoryDialogOpen(false); // Close dialog after add
+                  }
+                }}
+              >
+                {editingCategory ? 'Save Changes' : 'Add Category'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+
     </div>
   );
 };

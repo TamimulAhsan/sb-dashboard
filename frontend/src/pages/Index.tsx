@@ -56,7 +56,7 @@ const DashboardOverview = () => {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <MetricCard 
           title="Total Revenue" 
-          value={`$${totalRevenue.toFixed(2)}`} 
+          value={`$${(totalRevenue ?? 0).toFixed(2)}`}
           description="Total revenue from all orders" 
           icon={<DollarSign />}
         />
@@ -114,7 +114,7 @@ const DashboardOverview = () => {
                     <p className="text-xs text-muted-foreground">{order.username}</p>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm font-medium">${order.amount.toFixed(2)}</p>
+                  <p className="text-sm font-medium">${(order.amount ?? 0).toFixed(2)}</p>
                     <StatusBadge status={order.order_status} />
                   </div>
                 </div>
