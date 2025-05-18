@@ -84,18 +84,27 @@ class DashboardSummaryView(APIView):
             for entry in monthly_totals
         ]
 
-        recent_orders = (
-            Order.objects.order_by('-timestamp')[:5]
-            .values('order_number', 'username', 'order_status')
-        )
+        recent_orders = []
+        for order in Order.objects.order_by('-timestamp')[:5]:
+            total = (
+                OrderItem.objects
+                .filter(order_number=order.order_number)
+                .aggregate(total=Sum('amount'))['total'] or 0.0
+            )
+            recent_orders.append({
+                "order_number": order.order_number,
+                "username": order.username,
+                "order_status": order.order_status,
+                "total_amount": float(total)
+            })
 
         return Response({
-            'total_revenue': float(total_revenue),
-            'active_orders': active_orders,
-            'total_products': total_products,
-            'total_customers': total_customers,
-            'revenue_trend': revenue_trend,
-            'recent_orders': list(recent_orders),
+            "total_revenue": float(total_revenue),
+            "active_orders": active_orders,
+            "total_products": total_products,
+            "total_customers": total_customers,
+            "revenue_trend": revenue_trend,
+            "recent_orders": recent_orders,
         })
 
 

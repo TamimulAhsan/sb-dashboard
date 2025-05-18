@@ -9,12 +9,32 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Search, Eye } from 'lucide-react';
-import { mockOrders, mockProducts, getOrderStatusColor, getPaymentStatusColor } from '@/data/mockData';
 import { Order } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
 import { useEffect } from 'react';
 import api from '@/lib/api';
+
+const getOrderStatusColor = (status: string | null) => {
+  switch ((status || '').toLowerCase()) {
+    case 'delivered': return 'success';
+    case 'shipped': return 'info';
+    case 'processing': return 'warning';
+    case 'cancelled': return 'destructive';
+    default: return 'muted';
+  }
+};
+
+const getPaymentStatusColor = (status: string | null) => {
+  switch ((status || '').toLowerCase()) {
+    case 'paid': return 'success';
+    case 'pending': return 'warning';
+    case 'failed':
+    case 'refunded': return 'destructive';
+    default: return 'muted';
+  }
+};
+
 
 const OrdersPage = () => {
   const { toast } = useToast();
@@ -162,8 +182,8 @@ const OrdersPage = () => {
               <TableRow>
                 <TableHead>Order #</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Products</TableHead>
+                <TableHead className="text-right">Total</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -174,8 +194,12 @@ const OrdersPage = () => {
                 <TableRow key={order.order_number}>
                   <TableCell className="font-medium">{order.order_number}</TableCell>
                   <TableCell>{order.username}</TableCell>
-                  <TableCell>{getProductName(order.product_id)}</TableCell>
-                  <TableCell className="text-right">${parseFloat(order.amount).toFixed(2)}</TableCell>
+                  <TableCell>
+                    {Array.isArray(order.products) ? order.products.join(', ') : 'Unknown Product'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    ${order.total_amount ? parseFloat(order.total_amount).toFixed(2) : '0.00'}
+                  </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.order_status} />
                   </TableCell>
@@ -228,15 +252,17 @@ const OrdersPage = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Product</h3>
-                  <p className="text-sm">{getProductName(selectedOrder.product_id)}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Quantity</h3>
-                  <p className="text-sm">{selectedOrder.quantity}</p>
-                </div>
+                  <p className="text-sm">{Array.isArray(selectedOrder.products) ? selectedOrder.products.join(', ') : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Quantity</h3>
+                    <p className="text-sm">{selectedOrder.products?.length || 0}</p>
+                  </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Amount</h3>
-                  <p className="text-sm">${parseFloat(selectedOrder.amount).toFixed(2)}</p>
+                  <p className="text-sm">
+                    ${selectedOrder.total_amount ? parseFloat(selectedOrder.total_amount).toFixed(2) : '0.00'}
+                  </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Invoice</h3>

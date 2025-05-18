@@ -20,7 +20,7 @@ interface DashboardData {
   recent_orders: {
     order_number: string;
     username: string;
-    amount: number;
+    total_amount: number;
     order_status: string;
   }[];
 }
@@ -114,7 +114,9 @@ const DashboardOverview = () => {
                     <p className="text-xs text-muted-foreground">{order.username}</p>
                   </div>
                   <div className="text-right">
-                  <p className="text-sm font-medium">${(order.amount ?? 0).toFixed(2)}</p>
+                  <p className="text-sm font-medium">
+                    ${order.total_amount ? order.total_amount.toFixed(2) : '0.00'}
+                  </p>
                     <StatusBadge status={order.order_status} />
                   </div>
                 </div>
