@@ -68,9 +68,9 @@ const ProfilePage = () => {
             </div>
           </CardContent>
           <CardFooter>
-            <Button variant="outline" className="w-full">
+            {/* <Button variant="outline" className="w-full">
               Change Avatar
-            </Button>
+            </Button> */}
           </CardFooter>
         </Card>
         
