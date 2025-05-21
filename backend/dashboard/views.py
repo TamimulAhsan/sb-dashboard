@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
 from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
+from rest_framework.parsers import MultiPartParser, FormParser
 
 from .models import Product, Order, OrderItem, Cart, Wishlist, Review, Category
 from .serializers import (
@@ -20,6 +21,12 @@ from .serializers import (
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
+    parser_classes = [MultiPartParser, FormParser]
+
+    def get_serializer_context(self):
+        context = super().get_serializer_context()
+        context.update({"request": self.request})
+        return context
 
 
 class OrderViewSet(viewsets.ModelViewSet):

@@ -99,35 +99,64 @@ const ProductsPage = () => {
   
 
   const handleAddProduct = async () => {
+    const form = new FormData();
+    form.append('product_name', formData.product_name || '');
+    form.append('category', formData.category || '');
+    form.append('details', formData.details || '');
+    form.append('price', String(formData.price || 0));
+    if (fileInputRef.current?.files?.[0]) {
+      form.append('image', fileInputRef.current.files[0]); // actual file
+    }
+  
     try {
-      const res = await api.post('products/', formData);
+      const res = await api.post('products/', form, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
       setProducts(prev => [...prev, res.data]);
-      toast({ title: 'Product added', description: `${res.data.product_name} has been added.` });
+      toast({ title: 'Product added', description: `${res.data.product_name} added.` });
     } catch (err) {
-      console.error('Failed to add product', err);
-      toast({ title: 'Error', description: 'Could not add product', variant: 'destructive' });
+      console.error('Upload failed:', err);
+      toast({ title: 'Error', description: 'Could not add product.', variant: 'destructive' });
     } finally {
       setDialogOpen(false);
       resetForm();
     }
   };
   
+  
   const handleEditProduct = async () => {
     if (!editingProduct) return;
+  
     try {
-      const res = await api.patch(`products/${editingProduct.product_id}/`, formData);
+      const form = new FormData();
+      form.append("product_name", formData.product_name || '');
+      form.append("category", formData.category || '');
+      form.append("details", formData.details || '');
+      form.append("price", formData.price?.toString() || '');
+      if (fileInputRef.current?.files?.[0]) {
+        form.append("image", fileInputRef.current.files[0]);
+      }
+  
+      const res = await api.patch(
+        `products/${editingProduct.product_id}/`,
+        form,
+        { headers: { "Content-Type": "multipart/form-data" } }
+      );
+  
       setProducts(prev =>
         prev.map(p => p.product_id === editingProduct.product_id ? res.data : p)
       );
-      toast({ title: 'Product updated', description: `${res.data.product_name} has been updated.` });
+      toast({ title: "Product updated", description: `${res.data.product_name} has been updated.` });
     } catch (err) {
-      console.error('Failed to update product', err);
-      toast({ title: 'Error', description: 'Could not update product', variant: 'destructive' });
+      console.error("Failed to update product", err);
+      toast({ title: "Error", description: "Could not update product", variant: "destructive" });
     } finally {
       setDialogOpen(false);
       resetForm();
     }
   };
+  
+  
   
   const handleDeleteProduct = async (productId: number) => {
     try {
@@ -294,8 +323,11 @@ const ProductsPage = () => {
                 <TableRow key={product.product_id}>
                   <TableCell>
                     <Avatar className="h-10 w-10">
-                      <AvatarImage src={product.image || '/placeholder.svg'} alt={product.product_name} />
-                      <AvatarFallback><Image className="h-4 w-4" /></AvatarFallback>
+                    <AvatarImage
+                      src={`${product.image}`}
+                      alt={product.product_name}
+                    />
+                    <AvatarFallback><Image className="h-4 w-4" /></AvatarFallback>
                     </Avatar>
                   </TableCell>
                   <TableCell className="font-medium">{product.product_id}</TableCell>

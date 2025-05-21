@@ -144,3 +144,7 @@ CORS_ALLOWED_ORIGINS = [
     "https://dashboard.tamimulahsan.com",
 ]
 CORS_ALLOW_ALL_ORIGINS = True
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'

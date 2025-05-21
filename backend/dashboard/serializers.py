@@ -9,11 +9,23 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
+# class ProductSerializer(serializers.ModelSerializer):
+#     class Meta:
+#         model = Product
+#         fields = '__all__'
+
 class ProductSerializer(serializers.ModelSerializer):
+    image = serializers.SerializerMethodField()
+
     class Meta:
         model = Product
         fields = '__all__'
 
+    def get_image(self, obj):
+        request = self.context.get('request')
+        if obj.image:
+            return f"http://sb.tamimulahsan.com:4000/media/{obj.image.name}"
+        return None
 
 class OrderSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()

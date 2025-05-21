@@ -14,6 +14,8 @@ from .views import (
     OrderAnalyticsView,
     RevenueAnalyticsView
 )
+from django.conf import settings
+from django.conf.urls.static import static
 
 router = DefaultRouter()
 router.register('products', ProductViewSet)
@@ -30,4 +32,4 @@ urlpatterns = [
     path('analytics/products/', ProductAnalyticsView.as_view(), name='product-analytics'),
     path('analytics/orders/', OrderAnalyticsView.as_view(), name='order-analytics'),
     path('analytics/revenue/', RevenueAnalyticsView.as_view(), name='revenue-analytics'),
-]
+] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

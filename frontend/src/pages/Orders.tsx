@@ -60,17 +60,20 @@ const OrdersPage = () => {
   
 
   // Filter orders based on search term and status filter
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.username.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = 
-      statusFilter === 'all' || 
-      (order.order_status?.toLowerCase() === statusFilter.toLowerCase());
-    
-    return matchesSearch && matchesStatus;
-  });
+  const filteredOrders = orders
+    .slice() // create a shallow copy
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) // DESCENDING by date
+    .filter(order => {
+      const matchesSearch =
+        order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.username.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (order.order_status?.toLowerCase() === statusFilter.toLowerCase());
+
+      return matchesSearch && matchesStatus;
+    });
 
   const getProductName = (productId: number) => {
     const product = products.find(p => p.product_id === productId);
