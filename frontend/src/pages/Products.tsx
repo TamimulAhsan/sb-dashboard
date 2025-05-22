@@ -324,7 +324,7 @@ const ProductsPage = () => {
                   <TableCell>
                     <Avatar className="h-10 w-10">
                     <AvatarImage
-                      src={`${product.image}`}
+                      src={product.image || '/placeholder.svg'}
                       alt={product.product_name}
                     />
                     <AvatarFallback><Image className="h-4 w-4" /></AvatarFallback>

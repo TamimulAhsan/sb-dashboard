@@ -142,7 +142,7 @@ REST_FRAMEWORK = {
 }
 
 CORS_ALLOWED_ORIGINS = [
-    "https://dashboard.tamimulahsan.com",
+    "https://sb.tamimulahsan.com",
 ]
 CORS_ALLOW_ALL_ORIGINS = True
 

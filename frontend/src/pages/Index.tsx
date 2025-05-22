@@ -3,7 +3,7 @@ import React from 'react';
 import { DashboardLayout } from '@/components/layout/DashboardLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { BarChart, LineChart, AreaChart } from '@/components/ui/chart';
-import { Package, ShoppingCart, DollarSign, Users, ArrowRight } from 'lucide-react';
+import { Package, ShoppingCart, PoundSterling , Users, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Link } from 'react-router-dom';
@@ -58,7 +58,7 @@ const DashboardOverview = () => {
           title="Total Revenue" 
           value={`£${(totalRevenue ?? 0).toFixed(2)}`}
           description="Total revenue from all orders" 
-          icon={<DollarSign />}
+          icon={<PoundSterling />}
         />
         <MetricCard 
           title="Active Orders" 

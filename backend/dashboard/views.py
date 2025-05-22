@@ -1,5 +1,5 @@
 # dashboard/views.py
-from rest_framework import viewsets, filters
+from rest_framework import viewsets, filters, mixins, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.pagination import PageNumberPagination
@@ -7,14 +7,15 @@ from django.db.models import Sum, Count
 from django.db.models.functions import TruncMonth
 from rest_framework.parsers import MultiPartParser, FormParser
 
-from .models import Product, Order, OrderItem, Cart, Wishlist, Review, Category
+from .models import Product, Order, OrderItem, Cart, Wishlist, Review, Category, StoreInfo
 from .serializers import (
     ProductSerializer,
     OrderSerializer,
     CartSerializer,
     WishlistSerializer,
     ReviewSerializer,
-    CategorySerializer
+    CategorySerializer,
+    StoreInfoSerializer
 )
 
 
@@ -193,3 +194,24 @@ class RevenueAnalyticsView(APIView):
             "average_order_value": average_order_value,
             "monthly_revenue_trend": monthly_revenue_trend,
         })
+
+class StoreInfoViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.UpdateModelMixin):
+    queryset = StoreInfo.objects.all()
+    serializer_class = StoreInfoSerializer
+
+    def get_object(self):
+        return StoreInfo.objects.first()
+
+    def list(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if not instance:
+            return Response({}, status=status.HTTP_200_OK)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
+
+    def partial_update(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)

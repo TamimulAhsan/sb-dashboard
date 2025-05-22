@@ -12,7 +12,8 @@ from .views import (
     DashboardSummaryView,
     ProductAnalyticsView,
     OrderAnalyticsView,
-    RevenueAnalyticsView
+    RevenueAnalyticsView,
+    StoreInfoViewSet  
 )
 from django.conf import settings
 from django.conf.urls.static import static
@@ -25,6 +26,7 @@ router.register('cart', CartViewSet)
 router.register('wishlist', WishlistViewSet)
 router.register('reviews', ReviewViewSet)
 router.register('categories', CategoryViewSet)
+router.register('store-info', StoreInfoViewSet, basename='store-info')
 
 urlpatterns = [
     path('', include(router.urls)),

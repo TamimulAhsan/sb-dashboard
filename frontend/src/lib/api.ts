@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://sb.tamimulahsan.com:4000/api/', // Backend base URL
+  baseURL: 'http://sb.tamimulahsan.com/api/', // Backend base URL
   headers: {
     'Content-Type': 'application/json',
   },

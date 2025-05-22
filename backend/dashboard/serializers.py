@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from django.db.models import Sum
-from .models import Product, Order, Cart, Wishlist, Review, Category, OrderItem
+from .models import Product, Order, Cart, Wishlist, Review, Category, OrderItem, StoreInfo
 
 
 class CategorySerializer(serializers.ModelSerializer):
@@ -9,23 +9,11 @@ class CategorySerializer(serializers.ModelSerializer):
         fields = '__all__'
 
 
-# class ProductSerializer(serializers.ModelSerializer):
-#     class Meta:
-#         model = Product
-#         fields = '__all__'
-
 class ProductSerializer(serializers.ModelSerializer):
-    image = serializers.SerializerMethodField()
-
     class Meta:
         model = Product
         fields = '__all__'
 
-    def get_image(self, obj):
-        request = self.context.get('request')
-        if obj.image:
-            return f"http://sb.tamimulahsan.com:4000/media/{obj.image.name}"
-        return None
 
 class OrderSerializer(serializers.ModelSerializer):
     products = serializers.SerializerMethodField()
@@ -79,4 +67,11 @@ class WishlistSerializer(serializers.ModelSerializer):
 class ReviewSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
+        fields = '__all__'
+
+
+class StoreInfoSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = StoreInfo
         fields = '__all__'

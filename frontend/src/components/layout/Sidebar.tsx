@@ -7,7 +7,8 @@ import {
   ChartBar, 
   Package, 
   ShoppingCart, 
-  User
+  User,
+  Store
 } from 'lucide-react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -83,6 +84,9 @@ export function Sidebar({ open, setOpen }: SidebarProps) {
           </SidebarLink>
           <SidebarLink to="/products" icon={<Package size={20} />} onClick={closeSidebarOnMobile}>
             Products
+          </SidebarLink>
+          <SidebarLink to="/store-info" icon={<Store size={20} />} onClick={closeSidebarOnMobile}>
+            Store Info
           </SidebarLink>
           <SidebarLink to="/profile" icon={<User size={20} />} onClick={closeSidebarOnMobile}>
             Profile

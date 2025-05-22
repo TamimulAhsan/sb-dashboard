@@ -13,6 +13,8 @@ import Orders from "./pages/Orders";
 import Products from "./pages/Products";
 import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
+import StoreInfoPage from "./pages/StoreInfo";
+
 
 const queryClient = new QueryClient();
 
@@ -34,6 +36,7 @@ const App = () => (
               <Route path="/orders" element={<Orders />} />
               <Route path="/products" element={<Products />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/store-info" element={<StoreInfoPage />} />
             </Route>
             
             {/* 404 route */}
