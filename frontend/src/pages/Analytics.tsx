@@ -100,7 +100,7 @@ const AnalyticsPage = () => {
                 <CardDescription>Current year</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">${revenueStats.total_revenue.toFixed(2)}</div>
+                <div className="text-3xl font-bold">£{revenueStats.total_revenue.toFixed(2)}</div>
               </CardContent>
             </Card>
             
@@ -110,7 +110,7 @@ const AnalyticsPage = () => {
                 <CardDescription>Current year</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="text-3xl font-bold">${revenueStats.average_order_value.toFixed(2)}</div>
+                <div className="text-3xl font-bold">£{revenueStats.average_order_value.toFixed(2)}</div>
               </CardContent>
             </Card>
           </div>
@@ -129,7 +129,7 @@ const AnalyticsPage = () => {
                 index="date"
                 categories={["amount"]}
                 colors={["primary"]}
-                valueFormatter={(value) => `$${value}`}
+                valueFormatter={(value) => `£${value}`}
                 yAxisWidth={60}
                 className="h-96"
               />
@@ -167,7 +167,7 @@ const AnalyticsPage = () => {
                   index="product_name"
                   categories={["revenue"]}
                   colors={["#8B5CF6"]}
-                  valueFormatter={(value) => `$${value.toFixed(2)}`}
+                  valueFormatter={(value) => `£${value.toFixed(2)}`}
                   className="h-80"
                 />
               </CardContent>
@@ -186,7 +186,7 @@ const AnalyticsPage = () => {
                 categories={["sales", "revenue"]}
                 colors={["#F97316", "#0EA5E9"]}
                 valueFormatter={(value, category) => 
-                  category === "revenue" ? `$${value.toFixed(2)}` : `${value} units`
+                  category === "revenue" ? `£${value.toFixed(2)}` : `${value} units`
                 }
                 className="h-96"
               />

@@ -334,7 +334,7 @@ const ProductsPage = () => {
                   <TableCell>{product.product_name}</TableCell>
                   <TableCell className="max-w-xs truncate">{product.details}</TableCell>
                   <TableCell>{product.category || 'N/A'}</TableCell>
-                  <TableCell className="text-right">${product.price ? parseFloat(product.price).toFixed(2) : '0.00'}                  </TableCell>
+                  <TableCell className="text-right">£{product.price ? parseFloat(product.price).toFixed(2) : '0.00'}                  </TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-2">
                       <Button variant="ghost" size="icon" onClick={() => openEditDialog(product)}>
@@ -499,7 +499,7 @@ const ProductsPage = () => {
               />
             </div>
             <div className="grid w-full items-center gap-2">
-              <Label htmlFor="price">Price ($)</Label>
+              <Label htmlFor="price">Price (£)</Label>
               <Input
                 id="price"
                 name="price"

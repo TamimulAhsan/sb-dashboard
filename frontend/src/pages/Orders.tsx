@@ -201,7 +201,7 @@ const OrdersPage = () => {
                     {Array.isArray(order.products) ? order.products.join(', ') : 'Unknown Product'}
                   </TableCell>
                   <TableCell className="text-right">
-                    ${order.total_amount ? parseFloat(order.total_amount).toFixed(2) : '0.00'}
+                    £{order.total_amount ? parseFloat(order.total_amount).toFixed(2) : '0.00'}
                   </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.order_status} />
@@ -264,7 +264,7 @@ const OrdersPage = () => {
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Amount</h3>
                   <p className="text-sm">
-                    ${selectedOrder.total_amount ? parseFloat(selectedOrder.total_amount).toFixed(2) : '0.00'}
+                  £{selectedOrder.total_amount ? parseFloat(selectedOrder.total_amount).toFixed(2) : '0.00'}
                   </p>
                 </div>
                 <div>
@@ -287,7 +287,7 @@ const OrdersPage = () => {
               </div>
               
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Delivery Address</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Delivery Details</h3>
                 <p className="text-sm">{selectedOrder.delivery_address || 'Not specified'}</p>
               </div>
               

@@ -41,6 +41,7 @@ INSTALLED_APPS = [
     'dashboard',
     'users',
     'corsheaders',
+    'webhook',
 ]
 
 MIDDLEWARE = [
