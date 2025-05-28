@@ -1,4 +1,4 @@
-
+// src/components/ProtectedRoute.tsx
 import { Navigate, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 
@@ -6,15 +6,23 @@ interface ProtectedRouteProps {
   redirectPath?: string;
 }
 
-export const ProtectedRoute = ({ 
-  redirectPath = '/login'
+export const ProtectedRoute = ({
+  redirectPath = '/login',
 }: ProtectedRouteProps) => {
   const { isAuthenticated, isLoading } = useAuth();
-  
-  // Show loading or spinner while checking authentication
+
   if (isLoading) {
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+    // You can customize this with a spinner or better loading UI
+    return (
+      <div className="flex h-screen items-center justify-center text-muted-foreground">
+        Loading...
+      </div>
+    );
   }
-  
-  return isAuthenticated ? <Outlet /> : <Navigate to={redirectPath} replace />;
+
+  if (!isAuthenticated) {
+    return <Navigate to={redirectPath} replace />;
+  }
+
+  return <Outlet />;
 };

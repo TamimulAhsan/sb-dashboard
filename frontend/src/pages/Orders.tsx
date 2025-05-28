@@ -9,14 +9,37 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Search, Eye } from 'lucide-react';
-import { mockOrders, mockProducts, getOrderStatusColor, getPaymentStatusColor } from '@/data/mockData';
 import { Order } from '@/types';
 import { useToast } from '@/hooks/use-toast';
 import { cn } from '@/lib/utils';
+import { useEffect } from 'react';
+import api from '@/lib/api';
+
+const getOrderStatusColor = (status: string | null) => {
+  switch ((status || '').toLowerCase()) {
+    case 'delivered': return 'success';
+    case 'shipped': return 'info';
+    case 'processing': return 'warning';
+    case 'cancelled': return 'destructive';
+    default: return 'muted';
+  }
+};
+
+const getPaymentStatusColor = (status: string | null) => {
+  switch ((status || '').toLowerCase()) {
+    case 'paid': return 'success';
+    case 'pending': return 'warning';
+    case 'failed':
+    case 'refunded': return 'destructive';
+    default: return 'muted';
+  }
+};
+
 
 const OrdersPage = () => {
   const { toast } = useToast();
-  const [orders, setOrders] = useState<Order[]>(mockOrders);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [products, setProducts] = useState<{ product_id: number; product_name: string }[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
@@ -24,23 +47,45 @@ const OrdersPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editStatus, setEditStatus] = useState<string>('');
   const [editPaymentStatus, setEditPaymentStatus] = useState<string>('');
-  
-  // Filter orders based on search term and status filter
-  const filteredOrders = orders.filter(order => {
-    const matchesSearch = 
-      order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order.username.toLowerCase().includes(searchTerm.toLowerCase());
-    
-    const matchesStatus = 
-      statusFilter === 'all' || 
-      (order.order_status?.toLowerCase() === statusFilter.toLowerCase());
-    
-    return matchesSearch && matchesStatus;
-  });
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
 
-  // Get product name from product_id
+  useEffect(() => {
+    api.get('orders/')
+      .then(res => setOrders(res.data))
+      .catch(err => console.error('Failed to load orders'));
+  
+    api.get('products/')
+      .then(res => setProducts(res.data))
+      .catch(err => console.error('Failed to load products'));
+    // Fetch delivery fee from store-info
+    api.get('store-info/')
+    .then(res => {
+      if (res.data && res.data.delivery_fee) {
+        setDeliveryFee(parseFloat(res.data.delivery_fee)); // Convert string to number
+      }
+    })
+    .catch(err => console.error('Failed to load store info'));
+  }, []);
+  
+
+  // Filter orders based on search term and status filter
+  const filteredOrders = orders
+    .slice() // create a shallow copy
+    .sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()) // DESCENDING by date
+    .filter(order => {
+      const matchesSearch =
+        order.order_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        order.username.toLowerCase().includes(searchTerm.toLowerCase());
+
+      const matchesStatus =
+        statusFilter === 'all' ||
+        (order.order_status?.toLowerCase() === statusFilter.toLowerCase());
+
+      return matchesSearch && matchesStatus;
+    });
+
   const getProductName = (productId: number) => {
-    const product = mockProducts.find(p => p.product_id === productId);
+    const product = products.find(p => p.product_id === productId);
     return product?.product_name || 'Unknown Product';
   };
   
@@ -56,29 +101,42 @@ const OrdersPage = () => {
     setEditDialogOpen(true);
   };
   
-  const handleSaveStatus = () => {
-    if (!selectedOrder) return;
-    
-    const updatedOrders = orders.map(order => {
-      if (order.order_number === selectedOrder.order_number) {
-        return {
-          ...order,
-          order_status: editStatus,
-          payment_status: editPaymentStatus
-        };
-      }
-      return order;
-    });
-    
-    setOrders(updatedOrders);
-    setEditDialogOpen(false);
-    
-    toast({
-      title: "Order updated",
-      description: `Order #${selectedOrder.order_number} status has been updated.`,
-    });
+  const handleSaveStatus = async () => {
+    if (!selectedOrder) {
+      console.error("❌ selectedOrder is null — cannot update.");
+      return;
+    }
+  
+    try {
+      await api.patch(`orders/${selectedOrder.order_number}/`, {
+        order_status: editStatus,
+        payment_status: editPaymentStatus,
+      });
+  
+      const updatedOrders = orders.map(order =>
+        order.order_number === selectedOrder.order_number
+          ? { ...order, order_status: editStatus, payment_status: editPaymentStatus }
+          : order
+      );
+  
+      setOrders(updatedOrders);
+      setEditDialogOpen(false);
+  
+      toast({
+        title: 'Order updated',
+        description: `Order #${selectedOrder.order_number} status has been updated.`,
+      });
+    } catch (err) {
+      console.error('❌ Failed to update order:', err);
+      toast({
+        title: 'Error',
+        description: 'Failed to update the order. Please try again.',
+        variant: 'destructive',
+      });
+    }
   };
   
+    
   const orderStatusOptions = [
     'Pending', 'Processing', 'Shipped', 'Delivered', 'Cancelled'
   ];
@@ -136,8 +194,8 @@ const OrdersPage = () => {
               <TableRow>
                 <TableHead>Order #</TableHead>
                 <TableHead>Customer</TableHead>
-                <TableHead>Product</TableHead>
-                <TableHead className="text-right">Amount</TableHead>
+                <TableHead>Products</TableHead>
+                <TableHead className="text-right">Total</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Payment</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -148,8 +206,14 @@ const OrdersPage = () => {
                 <TableRow key={order.order_number}>
                   <TableCell className="font-medium">{order.order_number}</TableCell>
                   <TableCell>{order.username}</TableCell>
-                  <TableCell>{getProductName(order.product_id)}</TableCell>
-                  <TableCell className="text-right">${order.amount.toFixed(2)}</TableCell>
+                  <TableCell>
+                    {Array.isArray(order.products) ? order.products.join(', ') : 'Unknown Product'}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    £{order.total_amount
+                      ? (parseFloat(order.total_amount) + deliveryFee).toFixed(2)
+                      : deliveryFee.toFixed(2)}
+                  </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.order_status} />
                   </TableCell>
@@ -198,19 +262,23 @@ const OrdersPage = () => {
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">User ID</h3>
-                  <p className="text-sm">{selectedOrder.userID}</p>
+                  <p className="text-sm">{selectedOrder.user_id}</p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Product</h3>
-                  <p className="text-sm">{getProductName(selectedOrder.product_id)}</p>
-                </div>
-                <div>
-                  <h3 className="text-sm font-medium text-muted-foreground">Quantity</h3>
-                  <p className="text-sm">{selectedOrder.quantity}</p>
-                </div>
+                  <p className="text-sm">{Array.isArray(selectedOrder.products) ? selectedOrder.products.join(', ') : 'N/A'}</p>
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Quantity</h3>
+                    <p className="text-sm">{selectedOrder.products?.length || 0}</p>
+                  </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Amount</h3>
-                  <p className="text-sm">${selectedOrder.amount.toFixed(2)}</p>
+                  <p className="text-sm">
+                    £{selectedOrder.total_amount
+                      ? (parseFloat(selectedOrder.total_amount) + deliveryFee).toFixed(2)
+                      : deliveryFee.toFixed(2)}
+                    </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Invoice</h3>
@@ -232,7 +300,7 @@ const OrdersPage = () => {
               </div>
               
               <div>
-                <h3 className="text-sm font-medium text-muted-foreground">Delivery Address</h3>
+                <h3 className="text-sm font-medium text-muted-foreground">Delivery Details</h3>
                 <p className="text-sm">{selectedOrder.delivery_address || 'Not specified'}</p>
               </div>
               

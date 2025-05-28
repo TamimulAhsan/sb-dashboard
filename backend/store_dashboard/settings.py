@@ -11,6 +11,8 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from datetime import timedelta
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,10 +22,11 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-g@6romxyqj-wv)uqn1_(7nt@0_0q9lgwnwx6hc*q&t1dlcbe$q'
+# SECRET_KEY = 'django-insecure-g@6romxyqj-wv)uqn1_(7nt@0_0q9lgwnwx6hc*q&t1dlcbe$q'
+SECRET_KEY = 'd05bNO2N3K8hq3R1InhQEfBk60ZxcSkGWc-qtreT0LYHTxsblZCedA0qktF_auykhwwLYk2b-BJ3pOAoGnSnl_3K79Ib7yKJ3kEu'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -38,8 +41,12 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'rest_framework',
+    # 'rest_framework_authtoken',
+    'rest_framework_simplejwt', ## jwt expiration test
     'dashboard',
     'users',
+    'corsheaders',
+    'webhook',
 ]
 
 MIDDLEWARE = [
@@ -50,6 +57,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'corsheaders.middleware.CorsMiddleware'
 ]
 
 ROOT_URLCONF = 'store_dashboard.urls'
@@ -123,6 +131,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
 STATIC_URL = 'static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -132,8 +141,49 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 AUTH_USER_MODEL = 'users.CustomUser'
 
 REST_FRAMEWORK = {
+        'DEFAULT_AUTHENTICATION_CLASSES': (
+        'rest_framework_simplejwt.authentication.JWTAuthentication',  # ✅ Add this for JWT Bearer tokens
+        'rest_framework.authentication.SessionAuthentication',  # (Optional, for Browsable API sessions)
+    ),
     'DEFAULT_RENDERER_CLASSES': (
         'rest_framework.renderers.JSONRenderer',
-        'rest_framework.renderers.BrowsableAPIRenderer',  # Enables the HTML API view
-    )
+        # 'rest_framework.renderers.BrowsableAPIRenderer',  # Enables the HTML API view
+    ),
+    'DEFAULT_PERMISSION_CLASS' : (
+        'rest_framework.permission.IsAuthenticated',
+    ),
 }
+
+## just token expiration controller
+SIMPLE_JWT = {
+        'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+        'REFRESH_TOKEN_LIFETIME': timedelta(days=15),
+        'ROTATE_REFRESH_TOKENS': True,
+        'BLACKLIST_AFTER_ROTATION': True,
+    }
+
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [
+    "https://sb.tamimulahsan.com",
+]
+
+
+
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+
+
+# HSTS
+SECURE_HSTS_SECONDS = 31536000  # 1 year in seconds
+SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+SECURE_HSTS_PRELOAD = True
+
+
+# SSL Redirect - Not necessary with nginx reverse proxy
+SECURE_SSL_REDIRECT = False 
+
+# Secure session Cookies 
+SESSION_COOKIE_SECURE = True
+
+# Secure csrf Cookies 
+CSRF_COOKIE_SECURE = True
