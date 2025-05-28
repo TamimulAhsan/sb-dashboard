@@ -58,6 +58,21 @@ const StoreInfoPage = () => {
   };
 
   const handleSubmit = async () => {
+    // Validate all fields (except image)
+    if (
+      !formData.about ||
+      !formData.contact_email ||
+      !formData.currency ||
+      !formData.delivery_fee ||
+      !formData.bank_details
+    ) {
+      toast({
+        title: 'Error',
+        description: 'All fields are required.',
+        variant: 'destructive',
+      });
+      return;
+    }
     const form = new FormData();
     form.append('about', formData.about);
     form.append('contact_email', formData.contact_email);
@@ -104,12 +119,12 @@ const StoreInfoPage = () => {
                 ) : (
                   <div className="flex flex-col items-center justify-center h-full text-center text-sm text-gray-500">
                     <Upload className="w-6 h-6" />
-                    Upload Image
+                    Upload Image<span className="text-red-500">*</span>
                   </div>
                 )}
                 <input
                   type="file"
-                  accept="image/*"
+                  accept=".png"
                   ref={fileInputRef}
                   className="hidden"
                   onChange={handleImageChange}
@@ -118,22 +133,23 @@ const StoreInfoPage = () => {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="about">About</Label>
+              <Label htmlFor="about">About<span className="text-red-500">*</span></Label>
               <Textarea id="about" name="about" value={formData.about} onChange={handleChange} />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="contact_email">Contact Email</Label>
+              <Label htmlFor="contact_email">Contact Email<span className="text-red-500">*</span></Label>
               <Input
                 id="contact_email"
                 name="contact_email"
                 value={formData.contact_email}
+                placeholder="This will also be used for order notification"
                 onChange={handleChange}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="currency">Currency</Label>
+              <Label htmlFor="currency">Currency<span className="text-red-500">*</span></Label>
               <Input
                 id="currency"
                 name="currency"
@@ -143,18 +159,19 @@ const StoreInfoPage = () => {
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="delivery_fee">Delivery Fee</Label>
+              <Label htmlFor="delivery_fee">Delivery Fee<span className="text-red-500">*</span></Label>
               <Input
                 id="delivery_fee"
                 name="delivery_fee"
                 type="number"
                 value={formData.delivery_fee}
+                placeholder="Only use round numbers e.g,. 5, 7, 10"
                 onChange={handleChange}
               />
             </div>
 
             <div className="grid gap-2">
-              <Label htmlFor="bank_details">Bank Details</Label>
+              <Label htmlFor="bank_details">Bank Details<span className="text-red-500">*</span></Label>
               <Textarea
                 id="bank_details"
                 name="bank_details"

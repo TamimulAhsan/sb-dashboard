@@ -17,17 +17,20 @@ from .serializers import (
     CategorySerializer,
     StoreInfoSerializer
 )
+from rest_framework.permissions import IsAuthenticated, AllowAny
 
 
 class ProductViewSet(viewsets.ModelViewSet):
     queryset = Product.objects.all()
     serializer_class = ProductSerializer
     parser_classes = [MultiPartParser, FormParser]
+    permission_classes = [IsAuthenticated] 
 
     def get_serializer_context(self):
         context = super().get_serializer_context()
         context.update({"request": self.request})
         return context
+
 
 
 class OrderViewSet(viewsets.ModelViewSet):
@@ -36,34 +39,39 @@ class OrderViewSet(viewsets.ModelViewSet):
     filter_backends = [filters.SearchFilter]
     search_fields = ['order_number', 'username', 'order_status']
     pagination_class = PageNumberPagination
-
+    permission_classes = [IsAuthenticated] 
 
 class OrderItemViewSet(viewsets.ModelViewSet):
     queryset = OrderItem.objects.all()
     serializer_class = OrderSerializer
-
+    permission_classes = [IsAuthenticated] 
 
 class CartViewSet(viewsets.ModelViewSet):
     queryset = Cart.objects.all()
     serializer_class = CartSerializer
+    permission_classes = [IsAuthenticated] 
 
 
 class WishlistViewSet(viewsets.ModelViewSet):
     queryset = Wishlist.objects.all()
     serializer_class = WishlistSerializer
+    permission_classes = [IsAuthenticated] 
 
 
 class ReviewViewSet(viewsets.ModelViewSet):
     queryset = Review.objects.all()
     serializer_class = ReviewSerializer
+    permission_classes = [IsAuthenticated] 
 
 
 class CategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
+    permission_classes = [IsAuthenticated] 
 
 
 class DashboardSummaryView(APIView):
+    permission_classes = [IsAuthenticated] 
     def get(self, request):
         total_revenue = (
             OrderItem.objects.filter(order_number__payment_status='Paid')
@@ -117,6 +125,7 @@ class DashboardSummaryView(APIView):
 
 
 class ProductAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated] 
     def get(self, request):
         order_data = (
             OrderItem.objects
@@ -141,6 +150,7 @@ class ProductAnalyticsView(APIView):
 
 
 class OrderAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated] 
     def get(self, request):
         total_orders = Order.objects.count()
         total_customers = Order.objects.values('user_id').distinct().count()
@@ -167,6 +177,7 @@ class OrderAnalyticsView(APIView):
 
 
 class RevenueAnalyticsView(APIView):
+    permission_classes = [IsAuthenticated] 
     def get(self, request):
         paid_orders = Order.objects.filter(payment_status='Paid')
 
@@ -198,7 +209,7 @@ class RevenueAnalyticsView(APIView):
 class StoreInfoViewSet(viewsets.GenericViewSet, mixins.ListModelMixin, mixins.UpdateModelMixin):
     queryset = StoreInfo.objects.all()
     serializer_class = StoreInfoSerializer
-
+    permission_classes = [IsAuthenticated] 
     def get_object(self):
         return StoreInfo.objects.first()
 

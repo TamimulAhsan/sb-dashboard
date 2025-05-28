@@ -99,6 +99,21 @@ const ProductsPage = () => {
   
 
   const handleAddProduct = async () => {
+     // Validation: ensure all fields are filled in
+    if (
+      !formData.product_name ||
+      !formData.category ||
+      !formData.details ||
+      !formData.price ||
+      !fileInputRef.current?.files?.[0]
+    ) {
+      toast({
+        title: "Error",
+        description: "All fields are required.",
+        variant: "destructive",
+      });
+      return;
+    }
     const form = new FormData();
     form.append('product_name', formData.product_name || '');
     form.append('category', formData.category || '');
@@ -447,21 +462,23 @@ const ProductsPage = () => {
                   <>
                     <Upload className="h-8 w-8 text-gray-400" />
                     <p className="text-xs text-gray-500 mt-2">Click to upload</p>
-                    <p className="text-xs text-gray-400">300x300 recommended</p>
+                    <p className="text-xs text-gray-400">Less than 5MB</p>
                   </>
                 )}
                 <input 
                   type="file" 
                   className="hidden" 
                   ref={fileInputRef}
-                  accept="image/*"
+                  accept=".png"
                   onChange={handleFileChange}
                 />
               </div>
             </div>
             
             <div className="grid w-full items-center gap-2">
-              <Label htmlFor="product_name">Product Name</Label>
+              <Label htmlFor="product_name">
+                Product Name <span className="text-red-500">*</span>
+                </Label>
               <Input
                 id="product_name"
                 name="product_name"
@@ -471,7 +488,9 @@ const ProductsPage = () => {
               />
             </div>
             <div className="grid w-full items-center gap-2">
-              <Label htmlFor="category">Category</Label>
+              <Label htmlFor="category">
+                Category<span className="text-red-500">*</span>
+              </Label>
               <select
                 id="category"
                 name="category"
@@ -489,7 +508,9 @@ const ProductsPage = () => {
             </div>
 
             <div className="grid w-full items-center gap-2">
-              <Label htmlFor="details">Product Description</Label>
+              <Label htmlFor="details">
+                Product Description<span className="text-red-500">*</span>
+              </Label>
               <Textarea
                 id="details"
                 name="details"
@@ -499,7 +520,7 @@ const ProductsPage = () => {
               />
             </div>
             <div className="grid w-full items-center gap-2">
-              <Label htmlFor="price">Price (£)</Label>
+              <Label htmlFor="price">Price (£) <span className="text-red-500">*</span></Label>
               <Input
                 id="price"
                 name="price"

@@ -29,4 +29,5 @@ urlpatterns = [
     path('api/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
     path('api/register/', RegisterView.as_view(), name='register'),
     path('webhook/', include('webhook.urls')),
+    path('api/users/', include('users.urls')),  # new users endpoints
 ]

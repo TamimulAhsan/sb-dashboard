@@ -25,6 +25,7 @@ const AnalyticsPage = () => {
   } | null>(null);
   
   
+
   
   useEffect(() => {
     api.get('analytics/products/')

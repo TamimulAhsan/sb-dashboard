@@ -49,7 +49,7 @@ const DashboardOverview = () => {
       <div className="flex items-center justify-between">
         <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
         <div className="flex items-center gap-2">
-          <p className="text-sm text-muted-foreground">Welcome back, Admin</p>
+          <p className="text-sm text-muted-foreground">Welcome back</p>
         </div>
       </div>
       

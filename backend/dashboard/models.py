@@ -1,7 +1,5 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
-from django.conf import settings
-import os
 from django.core.files.storage import default_storage
 
 

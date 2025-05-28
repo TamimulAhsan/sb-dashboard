@@ -47,6 +47,7 @@ const OrdersPage = () => {
   const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [editStatus, setEditStatus] = useState<string>('');
   const [editPaymentStatus, setEditPaymentStatus] = useState<string>('');
+  const [deliveryFee, setDeliveryFee] = useState<number>(0);
 
   useEffect(() => {
     api.get('orders/')
@@ -56,6 +57,14 @@ const OrdersPage = () => {
     api.get('products/')
       .then(res => setProducts(res.data))
       .catch(err => console.error('Failed to load products'));
+    // Fetch delivery fee from store-info
+    api.get('store-info/')
+    .then(res => {
+      if (res.data && res.data.delivery_fee) {
+        setDeliveryFee(parseFloat(res.data.delivery_fee)); // Convert string to number
+      }
+    })
+    .catch(err => console.error('Failed to load store info'));
   }, []);
   
 
@@ -201,7 +210,9 @@ const OrdersPage = () => {
                     {Array.isArray(order.products) ? order.products.join(', ') : 'Unknown Product'}
                   </TableCell>
                   <TableCell className="text-right">
-                    £{order.total_amount ? parseFloat(order.total_amount).toFixed(2) : '0.00'}
+                    £{order.total_amount
+                      ? (parseFloat(order.total_amount) + deliveryFee).toFixed(2)
+                      : deliveryFee.toFixed(2)}
                   </TableCell>
                   <TableCell>
                     <OrderStatusBadge status={order.order_status} />
@@ -264,8 +275,10 @@ const OrdersPage = () => {
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Amount</h3>
                   <p className="text-sm">
-                  £{selectedOrder.total_amount ? parseFloat(selectedOrder.total_amount).toFixed(2) : '0.00'}
-                  </p>
+                    £{selectedOrder.total_amount
+                      ? (parseFloat(selectedOrder.total_amount) + deliveryFee).toFixed(2)
+                      : deliveryFee.toFixed(2)}
+                    </p>
                 </div>
                 <div>
                   <h3 className="text-sm font-medium text-muted-foreground">Invoice</h3>
