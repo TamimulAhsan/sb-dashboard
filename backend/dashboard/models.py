@@ -1,7 +1,8 @@
 from django.db import models
 from django.core.validators import FileExtensionValidator
 from django.core.files.storage import default_storage
-
+from django.core.files.base import ContentFile
+import os
 
 
 class Category(models.Model):
@@ -16,8 +17,14 @@ class Category(models.Model):
         return self.name
 
 
+# def product_image_upload_path(instance, filename):
+#     return f"product_images/{instance.product_id}.png" if instance.product_id else "product_images/temp.png"
+
 def product_image_upload_path(instance, filename):
-    return f"product_images/{instance.product_id}.png" if instance.product_id else "product_images/temp.png"
+    # ext = filename.split('.')[-1]
+    # return f"product_images/{instance.product_id or 'temp'}.{ext}"
+    return f"product_images/temp_{filename}"
+
 
 class Product(models.Model):
     product_id = models.AutoField(primary_key=True)
@@ -35,31 +42,55 @@ class Product(models.Model):
     price = models.DecimalField(max_digits=10, decimal_places=2)
 
     def save(self, *args, **kwargs):
-        # Save once to assign product_id
-        if not self.product_id:
-            super().save(*args, **kwargs)
+        is_new = self._state.adding  # True if creating
 
-        # Delete old file if the image is being updated
-        if self.pk:
-            try:
-                old = Product.objects.get(pk=self.pk)
-                if (
-                    old.image and
-                    old.image.name != f"product_images/{self.product_id}.png" and
-                    default_storage.exists(old.image.name)
-                ):
-                    default_storage.delete(old.image.name)
-            except Product.DoesNotExist:
-                pass
-
-        # Ensure image has consistent name
-        if self.image:
-            self.image.name = f"product_images/{self.product_id}.png"
-
+        # Save initially to get product_id
         super().save(*args, **kwargs)
 
+        if is_new and self.image:
+            # Read the current file
+            temp_image_path = self.image.name
+            extension = os.path.splitext(temp_image_path)[1]
+            new_image_name = f"product_images/{self.product_id}{extension}"
+
+            # Rename the image
+            image_content = self.image.read()
+            self.image.delete(save=False)  # Delete temp image
+            self.image.save(new_image_name, ContentFile(image_content), save=False)
+
+            # Save again to commit the new image path
+            super().save(update_fields=["image"])
+
+
+
+    # def save(self, *args, **kwargs):
+    #     is_new = self.pk is None
+    #     original_image = self.image
+    
+    #     # Save once to get product_id
+    #     super().save(*args, **kwargs)
+    
+    #     # Rename image only if it's not already correctly named
+    #     if original_image and original_image.name != f"product_images/{self.product_id}.png":
+    #         # Go to beginning of file
+    #         original_image.seek(0)
+    #         image_data = original_image.read()
+    
+    #         new_image_name = f"product_images/{self.product_id}.png"
+    
+    #         # Save under new name
+    #         self.image.save(new_image_name, ContentFile(image_data), save=False)
+    
+    #         # Delete old (temp) file
+    #         if default_storage.exists(original_image.name):
+    #             default_storage.delete(original_image.name)
+    
+    #         # Save the model again to update DB
+    #         super().save(update_fields=["image"])
+
+
     class Meta:
-        managed = False
+        managed = True
         db_table = 'products'
 
     def __str__(self):
